@@ -36,7 +36,7 @@ pub trait Sensor {
     fn read_humidity(&self) -> Result<f64, LinuxI2CError>;
 }
 
-impl<T> Sensor for Bme280<T> 
+impl<T> Sensor for Bme280<T>
     where T: I2CDevice<Error = LinuxI2CError> + Sized {
         fn read_temperature(&self) -> Result<f64, LinuxI2CError> {
             self.read_temperature()
@@ -56,12 +56,12 @@ impl<T: I2CDevice<Error = LinuxI2CError> + Sized> Bme280<T> {
     // usage of magic numbers, etc.
 
     pub fn new(i2c_addr: u16, bus_num: u8) -> Result<Bme280<LinuxI2CDevice>, LinuxI2CError> {
-        // Not fond of this Bme280 struct implementation being aware 
+        // Not fond of this Bme280 struct implementation being aware
         // of a specific I2CDevice implementation such as LinuxI2CDevice,
-        // but a utility construction function such as this will make the  
+        // but a utility construction function such as this will make the
         // consumer experience fairly better:
         let dev_name = format!("/dev/i2c-{}", bus_num);
-        let linux_i2c_device = try!(LinuxI2CDevice::new(dev_name, i2c_addr));    
+        let linux_i2c_device = try!(LinuxI2CDevice::new(dev_name, i2c_addr));
         Bme280::new_from_device(linux_i2c_device)
     }
 
@@ -135,14 +135,14 @@ impl<T: I2CDevice<Error = LinuxI2CError> + Sized> Bme280<T> {
         let h6 = self.calibration.h6 as f64;
 
         let adc = try!(self.read_raw_humidity());
-        println!("Raw humidity (adc) is: {}", adc);
+
         let h = try!(self.calc_t_fine()) - 76800.0;
-        println!("h: {}", h);
+
         let h_2 = (adc - (h4 * 64.0 + h5 / 16384.8 * h)) *
                   (h2 / 65536.0 * (1.0 + h6 / 67108864.0 * h * (1.0 + h3 / 67108864.0 * h)));
-        println!("h_2: {}", h_2);
+
         let h_3 = h_2 * (1.0 - h1 * h_2 / 524288.0);
-        println!("h_3: {}", h_3);
+
         match h_3 {
             x if x > 100.0 => Ok(x),
             x if x < 0.0 => Ok(x),
@@ -216,7 +216,7 @@ impl<T: I2CDevice<Error = LinuxI2CError> + Sized> Bme280<T> {
         let xlsb = try!(dev.smbus_read_byte_data(Register::TemperatureData2 as u8)) as u32;
 
         let raw = ((msb << 16) | (lsb << 8) | xlsb) >> 4;
-        println!("raw temp: {}", raw as f64);
+
         Ok(raw as f64)
     }
 
@@ -228,7 +228,7 @@ impl<T: I2CDevice<Error = LinuxI2CError> + Sized> Bme280<T> {
         let var1 = (ut / 16384.0 - t1 / 1024.0) * t2;
         let var2 = ((ut / 131072.0 - t1 / 8192.0) * (ut / 131072.0 - t1 / 8192.0)) * t3;
         let t_fine = var1 + var2;
-        println!("t_fine: {}", t_fine);
+
         Ok(t_fine)
     }
 
@@ -240,7 +240,7 @@ impl<T: I2CDevice<Error = LinuxI2CError> + Sized> Bme280<T> {
         let lsb = try!(dev.smbus_read_byte_data(Register::PressureData1 as u8)) as u32;
         let xlsb = try!(dev.smbus_read_byte_data(Register::PressureData2 as u8)) as u32;
         let raw = ((msb << 16) | (lsb << 8) | xlsb) >> 4;
-        println!("raw pressure: {}", raw);
+
         Ok(raw)
     }
 }
