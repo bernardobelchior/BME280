@@ -28,21 +28,28 @@ impl I2CDevice for FakeDevice {
         Ok(())
     }
 
-    #[allow(unused_variables)]
-    fn smbus_read_block_data(&mut self, register: u8) -> Result<Vec<u8>, Self::Error> {
-        Ok(vec![1, 2, 3])
-    }
-
-    fn smbus_read_i2c_block_data(&mut self, register: u8, len: u8) -> Result<Vec<u8>, Self::Error> {
-        Ok(vec![1, 2, 3])
-    }
-
-    fn smbus_write_block_data(&mut self, register: u8, values: &[u8]) -> Result<(), Self::Error> {
-        Ok(())
-    }
-
-    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<(), Self::Error> {
-        Ok(())
+    // Not certain how I ever saw a > 256 value from the "get byte" function
+    // within the Python code in the first place:
+    #[allow(overflowing_literals)]
+    fn smbus_read_byte_data(&mut self, register: u8) -> Result<u8, Self::Error> {
+        match register {
+            x if x == Register::TemperatureData as u8 => Ok(129),
+            x if x == Register::TemperatureData1 as u8 => Ok(142),
+            x if x == Register::TemperatureData2 as u8 => Ok(0),
+            x if x == Register::PressureData as u8 => Ok(92),
+            x if x == Register::PressureData1 as u8 => Ok(215),
+            x if x == Register::PressureData2 as u8 => Ok(112),
+            x if x == Register::HumidityData as u8 => Ok(111),
+            x if x == Register::HumidityData1 as u8 => Ok(159),
+            x if x == Register::H1 as u8 => Ok(75),
+            x if x == Register::H2 as u8 => Ok(355),
+            x if x == Register::H3 as u8 => Ok(0),
+            x if x == Register::H4 as u8 => Ok(21),
+            x if x == Register::H5 as u8 => Ok(0),
+            x if x == Register::H6 as u8 => Ok(0),
+            x if x == Register::H7 as u8 => Ok(28960),
+            _ => Err(LinuxI2CError::Nix(nix::Error::InvalidPath)),
+        }
     }
 
     fn smbus_read_word_data(&mut self, register: u8) -> Result<u16, LinuxI2CError> {
@@ -74,28 +81,25 @@ impl I2CDevice for FakeDevice {
         }
     }
 
-    // Not certain how I ever saw a > 256 value from the "get byte" function 
-    // within the Python code in the first place:
-    #[allow(overflowing_literals)]     
-    fn smbus_read_byte_data(&mut self, register: u8) -> Result<u8, Self::Error> {
-        match register {
-            x if x == Register::TemperatureData as u8 => Ok(129),
-            x if x == Register::TemperatureData1 as u8 => Ok(142),
-            x if x == Register::TemperatureData2 as u8 => Ok(0),
-            x if x == Register::PressureData as u8 => Ok(92),
-            x if x == Register::PressureData1 as u8 => Ok(215),
-            x if x == Register::PressureData2 as u8 => Ok(112),
-            x if x == Register::HumidityData as u8 => Ok(111),
-            x if x == Register::HumidityData1 as u8 => Ok(159),     
-            x if x == Register::H1 as u8 => Ok(75),
-            x if x == Register::H2 as u8 => Ok(355),
-            x if x == Register::H3 as u8 => Ok(0),
-            x if x == Register::H4 as u8 => Ok(21),
-            x if x == Register::H5 as u8 => Ok(0),
-            x if x == Register::H6 as u8 => Ok(0),
-            x if x == Register::H7 as u8 => Ok(28960),        
-            _ => Err(LinuxI2CError::Nix(nix::Error::InvalidPath)),
-        }
+    #[allow(unused_variables)]
+    fn smbus_read_block_data(&mut self, register: u8) -> Result<Vec<u8>, Self::Error> {
+        Ok(vec![1, 2, 3])
+    }
+
+    fn smbus_read_i2c_block_data(&mut self, register: u8, len: u8) -> Result<Vec<u8>, Self::Error> {
+        Ok(vec![1, 2, 3])
+    }
+
+    fn smbus_write_block_data(&mut self, register: u8, values: &[u8]) -> Result<(), Self::Error> {
+        Ok(())
+    }
+
+    fn smbus_write_i2c_block_data(&mut self, register: u8, values: &[u8]) -> Result<(), <Self as I2CDevice>::Error> {
+        Ok(())
+    }
+
+    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, Self::Error> {
+        Ok(vec![1, 2, 3])
     }
 }
 

@@ -1,12 +1,12 @@
-extern crate i2cdev;
 extern crate bme280;
+extern crate i2cdev;
 
-use std::{thread, time};
-use std::error::Error;
-use i2cdev::core::I2CDevice;
-use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
 use bme280::bme280::Bme280;
 use bme280::register::Register;
+use i2cdev::core::I2CDevice;
+use i2cdev::linux::{LinuxI2CDevice, LinuxI2CError};
+use std::{thread, time};
+use std::error::Error;
 
 fn create_bme() -> Bme280<DebugDeviceDecorator<LinuxI2CDevice>> {
     try_create_bme().unwrap()
@@ -77,12 +77,12 @@ fn humidity_reading_should_be_reasonable() {
     assert!(h < 100.0);
 }
 
-struct DebugDeviceDecorator<T: I2CDevice<Error = LinuxI2CError> + Sized> {
+struct DebugDeviceDecorator<T: I2CDevice<Error=LinuxI2CError> + Sized> {
     device: T,
 }
 
 impl<T> I2CDevice for DebugDeviceDecorator<T>
-    where T: I2CDevice<Error = LinuxI2CError> + Sized
+    where T: I2CDevice<Error=LinuxI2CError> + Sized
 {
     type Error = LinuxI2CError;
 
@@ -99,6 +99,20 @@ impl<T> I2CDevice for DebugDeviceDecorator<T>
     fn smbus_write_quick(&mut self, bit: bool) -> Result<(), Self::Error> {
         println!("smbus_write_quick: bit: {}", bit);
         self.device.smbus_write_quick(bit)
+    }
+
+    fn smbus_read_byte_data(&mut self, register: u8) -> Result<u8, Self::Error> {
+        print!("smbus_read_byte_data: register: {}", to_str(register));
+        let result = try!(self.device.smbus_read_byte_data(register));
+        println!(" result: {}", result);
+        Ok(result)
+    }
+
+    fn smbus_read_word_data(&mut self, register: u8) -> Result<u16, LinuxI2CError> {
+        print!("smbus_read_word_data: register: {}", to_str(register));
+        let result = try!(self.device.smbus_read_word_data(register));
+        println!(" result: {}", result);
+        Ok(result)
     }
 
     fn smbus_read_block_data(&mut self, register: u8) -> Result<Vec<u8>, Self::Error> {
@@ -120,25 +134,18 @@ impl<T> I2CDevice for DebugDeviceDecorator<T>
         self.device.smbus_write_block_data(register, values)
     }
 
-    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<(), Self::Error> {
+    fn smbus_write_i2c_block_data(&mut self, register: u8, values: &[u8]) -> Result<(), <Self as I2CDevice>::Error> {
+        println!("smbus_write_i2c_block_data: register: {}, values: {:?}",
+                 register,
+                 values);
+        self.device.smbus_write_i2c_block_data(register, values)
+    }
+
+    fn smbus_process_block(&mut self, register: u8, values: &[u8]) -> Result<Vec<u8>, Self::Error> {
         println!("smbus_process_block: register: {}, values: {:?}",
                  register,
                  values);
         self.device.smbus_process_block(register, values)
-    }
-
-    fn smbus_read_word_data(&mut self, register: u8) -> Result<u16, LinuxI2CError> {
-        print!("smbus_read_word_data: register: {}", to_str(register));
-        let result = try!(self.device.smbus_read_word_data(register));
-        println!(" result: {}", result);
-        Ok(result)
-    }
-
-    fn smbus_read_byte_data(&mut self, register: u8) -> Result<u8, Self::Error> {
-        print!("smbus_read_byte_data: register: {}", to_str(register));
-        let result = try!(self.device.smbus_read_byte_data(register));
-        println!(" result: {}", result);
-        Ok(result)
     }
 }
 
@@ -160,7 +167,7 @@ fn to_str(register: u8) -> &'static str {
 
         x if x == Register::H1 as u8 => "H1",
         x if x == Register::H2 as u8 => "H2",
-        x if x == Register::H3 as u8 => "H3",                
+        x if x == Register::H3 as u8 => "H3",
         x if x == Register::H4 as u8 => "H4",
         x if x == Register::H5 as u8 => "H5",
         x if x == Register::H6 as u8 => "H6",

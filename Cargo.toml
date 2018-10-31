@@ -4,5 +4,5 @@ version = "0.1.0"
 authors = ["Dave Falkner <ardave@gmail.com>"]
 
 [dependencies]
-i2cdev = "0.3.1"
-nix = "^0.10.0"
+i2cdev = "^0.4.0"
+nix = "0.10"
